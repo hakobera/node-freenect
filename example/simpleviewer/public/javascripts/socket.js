@@ -64,9 +64,11 @@ function() {
       socket.connect();
     },
 
-    send: function(message) {
+    sendCommand: function(commandType, options) {
       if (connected) {
-        socket.send(message);
+        var cmd = options || {};
+        cmd.type = commandType
+        socket.send(JSON.stringify(cmd));
       }
     }
   };

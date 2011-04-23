@@ -6,16 +6,21 @@ require(
 function(socket) {
   require.ready(function() {
     var startButton = $('#start'),
-        stopButton = $('#stop');
+        stopButton = $('#stop'),
+        ledSwitch = $('input[name=led]');
 
     socket.connect();
 
     startButton.click(function() {
-      socket.send(JSON.stringify({ type: 'start' }));
+      socket.sendCommand('start');
     });
 
     stopButton.click(function() {
-      socket.send(JSON.stringify({ type: 'stop' }));
+      socket.sendCommand('stop');
+    });
+
+    ledSwitch.click(function() {
+      socket.sendCommand('setLed', { color: $(this).val() });
     });
 
     socket.connect();

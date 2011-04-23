@@ -76,13 +76,21 @@ app.get('/', function(req, res) {
 });
 
 var commands = {
-  start: function() {
+  start: function(cmd) {
     kinect.init();
     kinect.start();
   },
 
-  stop: function() {
+  stop: function(cmd) {
     kinect.stop();
+  },
+
+  setLed: function(cmd) {
+    var color = parseInt(cmd.color, 10);
+    if (isNaN(color)) {
+      color = 5; // BLINK GREEN
+    }
+    kinect.setLed(color);
   }
 };
 
@@ -101,7 +109,7 @@ socket.on('connection', function(client) {
 
     console.log(command);
     if (commands.hasOwnProperty(command.type)) {
-      ret = commands[command.type]();
+      ret = commands[command.type](command);
       client.send(JSON.stringify(ret));
     }
   });
