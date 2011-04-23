@@ -6,6 +6,7 @@ bindings for [libfreenect](https://github.com/OpenKinect/libfreenect).
 
 
 This addon can work on Mac OS X environment, maybe linux environment could work.
+
 It cannot work on Windows environment.
 
 Requirements
@@ -24,7 +25,7 @@ Installation
 
 Just clone this repository, and using npm.
 
-> npm install
+	npm install
 
 
 Licence
