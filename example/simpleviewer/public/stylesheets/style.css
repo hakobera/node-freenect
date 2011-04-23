@@ -1,0 +1,33 @@
+body {
+  margin: 0;
+  padding: 0;
+  color: #fff;
+  background-color: #000;
+  font: 14px "Lucida Grande, "Helvetica Nueue", Arial, sans-serif;
+}
+
+h1,h2,h3,h4,h5,h6
+p,ul,li,div,form {
+  margin: 0;
+  padding: 0;
+}
+
+a {
+  outline: none;
+  -moz-outline-style: none;
+}
+
+header {
+
+}
+
+#contents {
+  padding: 20px;
+}
+
+footer {
+  margin-top: 15px;
+  color: #666;
+  font-size: 12px;
+  text-align: center;
+}

@@ -1,0 +1,24 @@
+{
+  "name": "simpleviewer",
+  "description": "A simple node-freenect viewer for kinect with Node.",
+  "version": "0.0.1",
+  "homepage": "https://github.com/hakobera/node-freenect",
+  "author": "Kazuyuki Honda <hakobera@gmail.com>",
+  "directories": {
+    "public": "./public"
+  },
+  "engine": {
+    "node": ">=-0.4.0"
+  },
+  "dependencies": {
+    "express": "2.2.2",
+    "connect": "1.3.0",
+    "ejs": "0.4.1",
+    "socket.io": "0.6.17",
+    "browserify": "0.3.1",
+    "jsmin": "1.0.0"
+  },
+  "bin": {
+    "simpleviewer": "./server.js"
+  }
+}

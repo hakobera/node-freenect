@@ -1,0 +1,8 @@
+{
+	"name" : "node-freenect",
+	"version" : "0.0.1",
+	"description" : "Experimental libfreenect bindings",
+	"author" : "Kazuyuki Honda",
+	"main" : "./freenect_bindings",
+	"scripts" : { "install" : "node-waf configure build" }
+}
