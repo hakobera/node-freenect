@@ -66,10 +66,11 @@ public:
 		freenect_set_log_level(freenect->context, FREENECT_LOG_DEBUG);
 
 		int deviceNum = freenect_num_devices(freenect->context);
-		printf("Number of devices found: %d\n", deviceNum);
 		if (deviceNum < 1) {
+		printf("Device not found\n");
 			return v8::Boolean::New(false);
 		}
+		printf("Number of devices found: %d\n", deviceNum);
 		return v8::Boolean::New(true);
 	}
 
@@ -127,7 +128,7 @@ public:
     v8_Freenect* freenect = getThis(args);
 	  if (freenect->device != NULL) {
 			v8::Local<v8::Value> tiltDegs = args[0];
-			int n = tiltDegs->NumberValue();
+			double n = tiltDegs->NumberValue();
 			if (n <= -30.0) {
 				n = -30.0;
 			}
@@ -172,6 +173,16 @@ public:
 		return v8::Boolean::New(true);
 	}
 
+	/**
+	 * Return connection to kinect is active or not active.
+	 */
+	static v8::Handle<v8::Value> IsConnected(const v8::Arguments& args)
+	{
+		v8_Freenect* freenect = getThis(args);
+		bool ret = freenect->context != NULL && freenect->device != NULL;
+		return v8::Boolean::New(ret);
+	}
+
 private:
 	
 	// back: owned by libfreenect (implicit for depth)
@@ -210,6 +221,7 @@ extern "C" void init(v8::Handle<v8::Object> target)
 	NODE_SET_PROTOTYPE_METHOD(t, "stop", v8_Freenect::Stop);
 	NODE_SET_PROTOTYPE_METHOD(t, "setLed", v8_Freenect::SetLed);
 	NODE_SET_PROTOTYPE_METHOD(t, "setTiltDegs", v8_Freenect::SetTiltDegs);
+	NODE_SET_PROTOTYPE_METHOD(t, "isConnected", v8_Freenect::IsConnected);
 
   target->Set(v8::String::New("Freenect"), t->GetFunction());
 }
