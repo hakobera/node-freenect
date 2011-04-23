@@ -85,7 +85,6 @@ public:
 			return v8::Boolean::New(false);
 		}
 		printf("Open device %d\n", deviceNumber);
-
 		return v8::Boolean::New(true);
 	}
 
@@ -98,15 +97,23 @@ public:
 	static v8::Handle<v8::Value> SetLed(const v8::Arguments& args)
 	{
     v8_Freenect* freenect = getThis(args);
-	  v8::Local<v8::Value> ledOption = args[0];
-    int n = ledOption->Int32Value();
-    if (n < 0) {
-      n = 0;
-    }
-    if (n > 6) {
-      n = 6;
-    }
-		freenect_set_led(freenect->device, static_cast<freenect_led_options>(n));
+	  if (freenect->device != NULL) {
+			v8::Local<v8::Value> ledOption = args[0];
+			int n = ledOption->Int32Value();
+			if (n < 0) {
+				n = 0;
+			}
+			if (n > 6) {
+				n = 6;
+			}
+			int ret = freenect_set_led(freenect->device, static_cast<freenect_led_options>(n));
+			if (ret < 0) {
+				printf("Could set LED %d\n", n);
+				return v8::Boolean::New(false);
+			}
+			return v8::Boolean::New(true);
+		}
+		return v8::Boolean::New(false);
 	}
 
 	/**
@@ -118,15 +125,24 @@ public:
 	static v8::Handle<v8::Value> SetTiltDegs(const v8::Arguments& args)
 	{
     v8_Freenect* freenect = getThis(args);
-	  v8::Local<v8::Value> tiltDegs = args[0];
-    int n = tiltDegs->NumberValue();
-    if (n <= -30.0) {
-      n = -30.0;
-    }
-    if (n >= 30.0) {
-      n = 30.0;
-    }
-		freenect_set_tilt_degs(freenect->device, n);
+	  if (freenect->device != NULL) {
+			v8::Local<v8::Value> tiltDegs = args[0];
+			int n = tiltDegs->NumberValue();
+			if (n <= -30.0) {
+				n = -30.0;
+			}
+			if (n >= 30.0) {
+				n = 30.0;
+			}
+
+			int ret = freenect_set_tilt_degs(freenect->device, n);
+			if (ret < 0) {
+				printf("Could set tilt degs %f\n", n);
+				return v8::Boolean::New(false);
+			}
+			return v8::Boolean::New(true);
+		}
+		return v8::Boolean::New(false);
 	}
 
 	/**
@@ -135,16 +151,20 @@ public:
 	static v8::Handle<v8::Value> Stop(const v8::Arguments& args) 
 	{
 		v8_Freenect* freenect = getThis(args);
-		
 		if (freenect->context != NULL) {
 			if (freenect->device != NULL) {
-				freenect_close_device(freenect->device);
+				if (freenect_close_device(freenect->device) < 0) {
+					printf("freenect_close device failed\n");
+					return v8::Boolean::New(false);
+				}
+		    freenect->device = NULL;
 			}
 
 			if (freenect_shutdown(freenect->context) < 0) {
 				printf("freenect_shutdown() failed\n");
 				return v8::Boolean::New(false);
 			}
+	    freenect->context = NULL;
 			printf("freenect_shutdown() successed\n");
 		} else {
 			printf("freenect context is not initialized\n");
