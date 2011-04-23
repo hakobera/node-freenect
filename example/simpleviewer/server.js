@@ -76,6 +76,10 @@ app.get('/', function(req, res) {
 });
 
 var commands = {
+	isConnected: function(cmd) {
+		return kinect.isConnected();
+	},
+
   start: function(cmd) {
 	  var ret = kinect.init();
 	  if (ret) {
@@ -93,7 +97,7 @@ var commands = {
     if (isNaN(color)) {
       color = 5; // BLINK GREEN
     }
-    kinect.setLed(color);
+    return kinect.setLed(color);
   },
 
 	setTiltDegs: function(cmd) {
@@ -101,7 +105,7 @@ var commands = {
 		if (isNaN(deg)) {
 			return false;
 		}
-		kinect.setTiltDegs(deg);
+		return kinect.setTiltDegs(deg);
 	}
 };
 
@@ -116,12 +120,17 @@ socket.on('connection', function(client) {
 
   client.on('message', function(message) {
     var command = JSON.parse(message),
-        ret;
+        ret = {};
 
     console.log(command);
     if (commands.hasOwnProperty(command.type)) {
-      ret = commands[command.type](command);
+      ret.type = command.type;
+	    ret.result = commands[command.type](command);
       client.send(JSON.stringify(ret));
+    } else {
+	    ret.type = command.type;
+	    ret.result = 'Invalid command.';
+	    client.send(JSON.stringify(ret));
     }
   });
 

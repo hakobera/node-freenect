@@ -9,9 +9,9 @@ function(socket) {
         stopButton = $('#stopButton'),
         ledSwitch = $('input[name=led]'),
         tiltDegInput = $('#tiltDegInput'),
-        tiltDegButton = $('#tiltDegButton');
-
-    socket.connect();
+        tiltDegButton = $('#tiltDegButton'),
+	      statusLabel = $('#statusLabel'),
+	      connected = false;
 
     startButton.click(function(e) {
 	    e.preventDefault();
@@ -33,6 +33,29 @@ function(socket) {
 		  socket.sendCommand('setTiltDegs', { degree: parseFloat(tiltDegInput.val()) });
 	  });
 
-    socket.connect();
+	  socket.on('isConnected', function(cmd) {
+		  var status = 'Not connected';
+		  console.log(cmd);
+		  if (cmd.result === true) {
+			  status = 'Connected';
+			  connected = true;
+		  } else {
+			  connected = false;
+		  }
+		  statusLabel.text(status);
+	  });
+
+	  socket.on('start', function() {
+		  socket.sendCommand('isConnected');
+	  });
+
+	  socket.on('stop', function() {
+		  socket.sendCommand('isConnected');
+	  });
+
+    socket.connect(function() {
+	    socket.sendCommand('isConnected');
+    });
+
   });
 });

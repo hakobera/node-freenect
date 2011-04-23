@@ -8,7 +8,9 @@ function() {
       socketWrapper,
       host = 'localhost',
       port = 3000,
-      connected = false;
+      connected = false,
+      connectionCallback,
+	    commandCallbacks = {};
 
   socket = new io.Socket(host, {
     port: port,
@@ -24,6 +26,9 @@ function() {
   socket.on('connect', function() {
     connected = true;
     console.log('Connected to %s:%d', host, port);
+	  if (connectionCallback) {
+		  connectionCallback();
+	  }
   });
 
   socket.on('connect_failed', function() {
@@ -51,8 +56,12 @@ function() {
     console.log('Reconnect failed.');
   });
 
-  socket.on('message', function(message) {
-    console.log(message);
+  socket.on('message', function(command) {
+	  var cmd = JSON.parse(command);
+    console.log(cmd);
+	  if (commandCallbacks.hasOwnProperty(cmd.type)) {
+		  commandCallbacks[cmd.type](cmd);
+	  };
   });
 
   socketWrapper = {
@@ -60,9 +69,12 @@ function() {
       return connected;
     },
 
-    connect: function() {
-      socket.connect();
-    },
+    connect: function(callback) {
+	    socket.connect();
+	    if (callback && typeof(callback) === 'function') {
+		    connectionCallback = callback
+	    }
+	  },
 
     sendCommand: function(commandType, options) {
       if (connected) {
@@ -70,8 +82,14 @@ function() {
         cmd.type = commandType
         socket.send(JSON.stringify(cmd));
       }
-    }
-  };
+    },
+
+	  on: function(commandType, callback) {
+		  if (callback && typeof(callback) === 'function') {
+			  commandCallbacks[commandType] = callback;
+		  }
+	  }
+	};
 
   return socketWrapper;
 });
