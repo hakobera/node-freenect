@@ -4,5 +4,8 @@
 	"description" : "Experimental libfreenect bindings",
 	"author" : "Kazuyuki Honda",
 	"main" : "./freenect_bindings",
-	"scripts" : { "install" : "node-waf configure build" }
+	"scripts" : { "install" : "node-waf configure build" },
+  "engine": {
+    "node": ">=-0.4.0"
+  }
 }
