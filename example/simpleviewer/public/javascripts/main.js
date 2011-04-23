@@ -5,23 +5,33 @@ require(
 ],
 function(socket) {
   require.ready(function() {
-    var startButton = $('#start'),
-        stopButton = $('#stop'),
-        ledSwitch = $('input[name=led]');
+    var startButton = $('#startButton'),
+        stopButton = $('#stopButton'),
+        ledSwitch = $('input[name=led]'),
+        tiltDegInput = $('#tiltDegInput'),
+        tiltDegButton = $('#tiltDegButton');
 
     socket.connect();
 
-    startButton.click(function() {
+    startButton.click(function(e) {
+	    e.preventDefault();
       socket.sendCommand('start');
     });
 
-    stopButton.click(function() {
-      socket.sendCommand('stop');
+    stopButton.click(function(e) {
+      e.preventDefault();
+	    socket.sendCommand('stop');
     });
 
-    ledSwitch.click(function() {
-      socket.sendCommand('setLed', { color: $(this).val() });
+    ledSwitch.click(function(e) {
+	    socket.sendCommand('setLed', { color: $(this).val() });
     });
+
+	  tiltDegButton.click(function(e) {
+	    e.preventDefault();
+		  var degs
+		  socket.sendCommand('setTiltDegs', { degree: parseFloat(tiltDegInput.val()) });
+	  });
 
     socket.connect();
   });

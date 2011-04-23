@@ -18,11 +18,17 @@ a {
 }
 
 header {
-
+	padding: 0 20px;
+	color: #000;
+	background-color: #eee;
 }
 
 #contents {
-  padding: 20px;
+  padding: 10px 20px;
+}
+
+fieldset {
+	margin: 10px 0;
 }
 
 footer {

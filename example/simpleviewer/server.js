@@ -77,12 +77,15 @@ app.get('/', function(req, res) {
 
 var commands = {
   start: function(cmd) {
-    kinect.init();
-    kinect.start();
+	  var ret = kinect.init();
+	  if (ret) {
+		  return kinect.start();
+	  }
+	  return false;
   },
 
   stop: function(cmd) {
-    kinect.stop();
+    return kinect.stop();
   },
 
   setLed: function(cmd) {
@@ -91,7 +94,15 @@ var commands = {
       color = 5; // BLINK GREEN
     }
     kinect.setLed(color);
-  }
+  },
+
+	setTiltDegs: function(cmd) {
+		var deg = parseFloat(cmd.degree);
+		if (isNaN(deg)) {
+			return false;
+		}
+		kinect.setTiltDegs(deg);
+	}
 };
 
 app.listen(port);

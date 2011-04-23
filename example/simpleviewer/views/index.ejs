@@ -1,20 +1,29 @@
-<section id="control">
-  <section>
-    <span id="status"></span>
-  </section>
-  <h2>Start/Stop</h2>
-  <div>
-    <button id="start">Start</button>
-    <button id="stop">Stop</button>
-  </div>
-  <h2>LED Control</h2>
-  <div>
-    <input type="radio" name="led" value="0"/> OFF
-    <input type="radio" name="led" value="1"/> GREEN
-    <input type="radio" name="led" value="2"/> RED
-    <input type="radio" name="led" value="3"/> YELLOW
-    <input type="radio" name="led" value="4"/> BLINK YELLOW
-    <input type="radio" name="led" value="5" checked="checked"/> BLINK GREEN
-    <input type="radio" name="led" value="6"/> BLINK RED YELLOW
-  </div>
-</section>
+<form id="control">
+	<fieldset>
+		<legend>Status</legend>
+		<div>
+			<button id="startButton">Start</button>
+			<button id="stopButton">Stop</button>
+			Status: <span id="status"></span>
+		</div>
+	</fieldset>
+	<fieldset>
+		<legend>LED Control</legend>
+		<div>
+			<input type="radio" name="led" value="0"/> OFF
+			<input type="radio" name="led" value="1"/> GREEN
+			<input type="radio" name="led" value="2"/> RED
+			<input type="radio" name="led" value="3"/> YELLOW
+			<input type="radio" name="led" value="4"/> BLINK YELLOW
+			<input type="radio" name="led" value="5" checked="checked"/> BLINK GREEN
+			<input type="radio" name="led" value="6"/> BLINK RED YELLOW
+		</div>
+	</fieldset>
+	<fieldset>
+		<legend>Tilt Degrees</legend>
+		<div>
+			<input type="text" id="tiltDegInput" maxlength="5" value="0" size="10"/>
+			<button id="tiltDegButton">Change</button>
+		</div>
+	</fieldset>
+</form>
