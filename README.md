@@ -24,7 +24,8 @@ Installation
 
 Just clone this repository, and using npm.
 
-  npm install
+> npm install
+
 
 Licence
 -------
