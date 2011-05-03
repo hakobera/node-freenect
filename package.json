@@ -1,5 +1,5 @@
 {
-	"name" : "node-freenect",
+	"name" : "freenect_bindings",
 	"version" : "0.0.1",
 	"description" : "Experimental libfreenect bindings",
 	"author" : "Kazuyuki Honda",

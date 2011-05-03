@@ -33,11 +33,19 @@ fieldset {
 
 footer {
   margin-top: 15px;
-  color: #666;
+  color: #999;
   font-size: 12px;
   text-align: center;
 }
 
 input.number {
 	text-align: right;
+}
+
+ul.horizontal {
+	list-style:: none;
+}
+
+ul.horizontal li {
+	display: inline-block;
 }

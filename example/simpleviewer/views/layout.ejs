@@ -4,16 +4,20 @@
     <meta charset="utf-8"/>
     <title>Simple Viewer - node-freenect</title>
     <link rel="stylesheet" href="/stylesheets/style.css"/>
-    <script data-main="/javascripts/main" src="/javascripts/require.js"></script>
+		<script src="http://code.jquery.com/jquery-1.5.2.min.js"></script>
+		<script src="/javascripts/socket.io.js"></script>
+		<script src="/javascripts/kinect.js"></script>
+		<script src="/javascripts/main.js"></script>
   </head>
   <body>
     <header>
-      <h1>Simple Viewer</h1>
+      <h1>Simple Viewer for node-freenect</h1>
     </header>
     <section id="contents">
     <%- body %>
     </section>
     <footer>
+			<p>Source Code is availabe on <a href="https://github.com/hakobera/node-freenect">github</a></p>
       <p>&copy;2011 hakobera</p>
     </footer>
   </body>

@@ -1,11 +1,6 @@
-define(
-[
-  '/javascripts/socket.io.js'
-],
-function() {
+(function(global) {
   var server,
       socket,
-      socketWrapper,
       host = 'localhost',
       port = 3000,
       connected = false,
@@ -33,7 +28,7 @@ function() {
 
   socket.on('connect_failed', function() {
     connected = false;
-    console.log('Connect filed.');
+    console.log('Connect failed.');
   });
 
   socket.on('close', function() {
@@ -64,10 +59,7 @@ function() {
 	  };
   });
 
-  socketWrapper = {
-    isConnected: function() {
-      return connected;
-    },
+  Kinect = {
 
     connect: function(callback) {
 	    socket.connect();
@@ -88,8 +80,26 @@ function() {
 		  if (callback && typeof(callback) === 'function') {
 			  commandCallbacks[commandType] = callback;
 		  }
-	  }
-	};
+	  },
 
-  return socketWrapper;
-});
+	  setLed: function(ledOption) {
+		  this.sendCommand('setLed', { color: ledOption });
+	  },
+
+	  setTiltAngle: function(angle) {
+			this.sendCommand('setTiltAngle', { degree: angle });
+		}
+
+  };
+
+	Kinect.LED_OPTIONS = {
+		OFF: 0,
+		GREEN: 1,
+		RED: 2,
+		YELLOW: 3,
+		BLINK_GREEN: 5,
+		BLINK_RED_YELLOW: 6
+  };
+
+	return Kinect;
+})(this);

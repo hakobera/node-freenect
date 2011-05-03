@@ -4,13 +4,10 @@ var express = require('express'),
     sys = require('sys'),
     path = require('path'),
     io = require('socket.io'),
-    freenect = require('../../build/default/freenect_bindings'),
+    kinect = new (require('../../build/default/freenect_bindings').Kinect)(),
     port = 3000,
     app,
-    socket,
-    kinect;
-
-kinect = new freenect.Freenect();
+    socket;
 
 app = express.createServer();
 
@@ -76,22 +73,6 @@ app.get('/', function(req, res) {
 });
 
 var commands = {
-	isConnected: function(cmd) {
-		return kinect.isConnected();
-	},
-
-  start: function(cmd) {
-	  var ret = kinect.init();
-	  if (ret) {
-		  return kinect.start();
-	  }
-	  return false;
-  },
-
-  stop: function(cmd) {
-    return kinect.stop();
-  },
-
   setLed: function(cmd) {
     var color = parseInt(cmd.color, 10);
     if (isNaN(color)) {
@@ -100,12 +81,12 @@ var commands = {
     return kinect.setLed(color);
   },
 
-	setTiltDegs: function(cmd) {
+	setTiltAngle: function(cmd) {
 		var deg = parseFloat(cmd.degree);
 		if (isNaN(deg)) {
 			return false;
 		}
-		return kinect.setTiltDegs(deg);
+		return kinect.setTiltAngle(deg);
 	}
 };
 

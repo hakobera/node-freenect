@@ -7,34 +7,152 @@
 //-------------------------------------------------------------------------
 #include <v8.h>
 #include <node.h>
+#include <node_buffer.h>
 #include <node_events.h>
 
-#include <libfreenect.h>
+#include <string.h>
+#include <errno.h>
+#include <iostream>
+#include <stdio.h>
+#include <cstring>
+#include <string>
+#include <cstdlib>
+
+#include <pthread.h>
+
+#include <libfreenect_sync.h>
 
 //-------------------------------------------------------------------------
 // Defines
 //-------------------------------------------------------------------------
 // Taken from node-usb
-#define V8STR(str) String::New(str)
-#define THROW_BAD_ARGS(FAIL_MSG) return ThrowException(Exception::TypeError(V8STR(FAIL_MSG)));
-#define THROW_ERROR(FAIL_MSG) return ThrowException(Exception::Error(V8STR(FAIL_MSG))));
-#define THROW_NOT_YET return ThrowException(Exception::Error(String::Concat(String::New(__FUNCTION__), String::New("not yet supported"))));
+#define V8STR(str) v8::String::New(str)
+#define THROW_BAD_ARGS(FAIL_MSG) return v8::ThrowException(v8::Exception::TypeError(V8STR(FAIL_MSG)));
+#define THROW_ERROR(FAIL_MSG) return v8::ThrowException(v8::Exception::Error(V8STR(FAIL_MSG))));
+#define THROW_NOT_YET return v8::ThrowException(v8::Exception::Error(v8::String::Concat(v8::String::New(__FUNCTION__), v8::String::New("not yet supported"))));
+
+#define MAX_TILT_DEGS (31.0)
+#define MIN_TILT_DEGS (-31.0)
+#define INVALID_TILT_DEGS (-99.0)
 
 //-------------------------------------------------------------------------
-// Freenect wrpper
+// libfreenect wrapper for Node.js
 //-------------------------------------------------------------------------
-class v8_Freenect : node::EventEmitter
+class Freenect : node::EventEmitter
 {
 public:
 
-	v8_Freenect()
-	: context(NULL), device(NULL)
+	Freenect()
+	: deviceIndex(0), videoFormat(FREENECT_VIDEO_RGB), depthFormat(FREENECT_DEPTH_11BIT)
 	{
+		videoBuffer = malloc(FREENECT_VIDEO_RGB_SIZE);
+		depthBuffer = malloc(FREENECT_DEPTH_11BIT_SIZE);
+		tiltState = new freenect_raw_tilt_state();
+		tiltAngle = GetTiltAngle();
 	}
 
-	~v8_Freenect() 
+	virtual ~Freenect()
 	{
+		free(videoBuffer);
+		free(depthBuffer);
+		freenect_sync_stop();
 	}
+
+	/**
+	 * Set LED option.
+	 *
+	 * @param option LED option to set.
+	 * @return True if set tilt angle success.
+	 */
+	bool SetLed(freenect_led_options option)
+	{
+		int ret = freenect_sync_set_led(option, deviceIndex);
+		if (ret < 0) {
+			printf("Could set LED %d\n", option);
+			return false;
+		}
+		ledOption = option;
+		return true;
+	}
+
+	/**
+	 * Set tilt angle.
+	 *
+	 * @param angle Tilt angle toset. Range [-30.0..30.0]
+	 * @return True if set tilt angle success.
+ 	 */
+	bool SetTiltAngle(double angle)
+	{
+	  double deg = angle;
+		if (deg <= MIN_TILT_DEGS) {
+			deg = MIN_TILT_DEGS;
+		}
+		if (deg >= MAX_TILT_DEGS) {
+			deg = MAX_TILT_DEGS;
+		}
+
+		int ret = freenect_sync_set_tilt_degs(deg, deviceIndex);
+		if (ret < 0) {
+			printf("Could set tilt degs %f\n", deg);
+			return false;
+		}
+		tiltAngle = deg;
+		return true;
+	}
+
+	/**
+	 * Get video or IR buffer from kinect.
+	 *
+	 * @return Video buffer or NULL on error.
+ 	 */
+	void* GetVideo()
+	{
+		uint32_t timestamp;
+		int ret = freenect_sync_get_video(&videoBuffer, &timestamp, deviceIndex, videoFormat); 
+		if (ret != 0) {
+			printf("Could not get video\n");	
+			return NULL;
+		}
+		return videoBuffer;
+	}
+	
+	/**
+	 * Get depth buffer from kinect.
+	 *
+	 * @return Depth buffer or NULL on error.
+ 	 */
+	void* GetDepth()
+	{
+		uint32_t timestamp;
+		int ret = freenect_sync_get_depth(&depthBuffer, &timestamp, deviceIndex, depthFormat); 
+		if (ret != 0) {
+			printf("Could not get depth\n");	
+			return NULL;
+		}
+		return depthBuffer;
+	}
+
+	/**
+	 * Get tilt angle of kinect.
+	 *
+	 * @return Depth buffer data
+	 */
+	double GetTiltAngle()
+	{
+		int ret = freenect_sync_get_tilt_state(&tiltState, deviceIndex);
+		if (ret != 0) {
+			printf("Could not get tilt angle\n");
+			return INVALID_TILT_DEGS;
+		}
+		double angle = freenect_get_tilt_degs(tiltState);
+		return angle;
+	}
+
+	//------------------------------------------------------------------------
+
+	//------------------------------------------------------------------------
+	// Export functions.
+	//------------------------------------------------------------------------
 
 	/**
 	 * Constructor for Node.js.
@@ -44,165 +162,133 @@ public:
 	 */
 	static v8::Handle<v8::Value> New(const v8::Arguments& args)
 	{
-		if (args.Length() == 0) {
-			(new v8_Freenect())->Wrap(args.This());
-		}
+		Freenect* freenect = new Freenect();
+		freenect->Wrap(args.This());
+		freenect->Ref();
 		return args.This();
-	}
-
-	/**
-	 * Init Kinect configuration.
-	 *
-	 * @return True, if kinect initialized success.
-	 */
-	static v8::Handle<v8::Value> Init(const v8::Arguments& args) 
-	{
-		v8_Freenect* freenect = getThis(args);
-		if (freenect_init(&freenect->context, NULL) < 0) {
-			printf("freenect_init() failed\n");
-			return v8::Boolean::New(false);
-		}
-		printf("freenect_init() successed.\n");
-		freenect_set_log_level(freenect->context, FREENECT_LOG_DEBUG);
-
-		int deviceNum = freenect_num_devices(freenect->context);
-		if (deviceNum < 1) {
-		printf("Device not found\n");
-			return v8::Boolean::New(false);
-		}
-		printf("Number of devices found: %d\n", deviceNum);
-		return v8::Boolean::New(true);
-	}
-
-	/**
-	 * Open kinect.
-	 */
-	static v8::Handle<v8::Value> Start(const v8::Arguments& args) 
-	{
-		v8_Freenect* freenect = getThis(args);
-		int deviceNumber = 0;
-		if (freenect_open_device(freenect->context, &freenect->device, deviceNumber) < 0) {
-			printf("Could not open device %d\n", deviceNumber);
-			return v8::Boolean::New(false);
-		}
-		printf("Open device %d\n", deviceNumber);
-		return v8::Boolean::New(true);
 	}
 
 	/**
 	 * Set LED options.
 	 *
 	 * @param args Arguments list.
-	 * @return true if args is valid options.
+	 * @return {Boolean} true if args is valid options.
 	 */
 	static v8::Handle<v8::Value> SetLed(const v8::Arguments& args)
 	{
-    v8_Freenect* freenect = getThis(args);
-	  if (freenect->device != NULL) {
-			v8::Local<v8::Value> ledOption = args[0];
-			int n = ledOption->Int32Value();
-			if (n < 0) {
-				n = 0;
-			}
-			if (n > 6) {
-				n = 6;
-			}
-			int ret = freenect_set_led(freenect->device, static_cast<freenect_led_options>(n));
-			if (ret < 0) {
-				printf("Could set LED %d\n", n);
-				return v8::Boolean::New(false);
-			}
-			return v8::Boolean::New(true);
+		if (args.Length() != 1) {
+			THROW_BAD_ARGS("SetLed must have 1 argument.")
 		}
-		return v8::Boolean::New(false);
+		
+		v8::Local<v8::Value> ledOption = args[0];
+		if (!ledOption->IsInt32()) {
+			THROW_BAD_ARGS("SetLed must have 1 int argument.")
+		}
+
+		int n = ledOption->Int32Value();
+		if (n < LED_OFF) {
+			n = LED_OFF;
+		}
+		if (n > LED_BLINK_RED_YELLOW) {
+			n = LED_BLINK_RED_YELLOW;
+		}
+
+		Freenect* freenect = getThis(args);
+		bool ret = freenect->SetLed(static_cast<freenect_led_options>(n));
+		return v8::Boolean::New(ret);
 	}
 
 	/**
 	 * Set tilt angle of kinect.
 	 *
 	 * @param args Arguments list.
-	 * @return true if args is valid options.
+	 * @return {Boolean} true if args is valid options.
 	 */
-	static v8::Handle<v8::Value> SetTiltDegs(const v8::Arguments& args)
+	static v8::Handle<v8::Value> SetTiltAngle(const v8::Arguments& args)
 	{
-    v8_Freenect* freenect = getThis(args);
-	  if (freenect->device != NULL) {
-			v8::Local<v8::Value> tiltDegs = args[0];
-			double n = tiltDegs->NumberValue();
-			if (n <= -30.0) {
-				n = -30.0;
-			}
-			if (n >= 30.0) {
-				n = 30.0;
-			}
-
-			int ret = freenect_set_tilt_degs(freenect->device, n);
-			if (ret < 0) {
-				printf("Could set tilt degs %f\n", n);
-				return v8::Boolean::New(false);
-			}
-			return v8::Boolean::New(true);
+		if (args.Length() != 1) {
+			THROW_BAD_ARGS("SetTiltAngle must have 1 argument.")
 		}
-		return v8::Boolean::New(false);
-	}
-
-	/**
-	 * Shutdown kinect.
-	 */
-	static v8::Handle<v8::Value> Stop(const v8::Arguments& args) 
-	{
-		v8_Freenect* freenect = getThis(args);
-		if (freenect->context != NULL) {
-			if (freenect->device != NULL) {
-				if (freenect_close_device(freenect->device) < 0) {
-					printf("freenect_close device failed\n");
-					return v8::Boolean::New(false);
-				}
-		    freenect->device = NULL;
-			}
-
-			if (freenect_shutdown(freenect->context) < 0) {
-				printf("freenect_shutdown() failed\n");
-				return v8::Boolean::New(false);
-			}
-	    freenect->context = NULL;
-			printf("freenect_shutdown() successed\n");
-		} else {
-			printf("freenect context is not initialized\n");
+		
+		v8::Local<v8::Value> angle = args[0];
+		if (!angle->IsNumber()) {
+			THROW_BAD_ARGS("SetTiltAngle must have 1 number argument.")
 		}
-		return v8::Boolean::New(true);
-	}
-
-	/**
-	 * Return connection to kinect is active or not active.
-	 */
-	static v8::Handle<v8::Value> IsConnected(const v8::Arguments& args)
-	{
-		v8_Freenect* freenect = getThis(args);
-		bool ret = freenect->context != NULL && freenect->device != NULL;
+		
+		double a = angle->NumberValue();
+    
+		Freenect* freenect = getThis(args);
+		bool ret = freenect->SetTiltAngle(a);
 		return v8::Boolean::New(ret);
 	}
 
-private:
-	
-	// back: owned by libfreenect (implicit for depth)
-	// mid: owned by callbacks, "latest frame ready"
-	// front: owned by GL, "currently being drawn"
-	uint8_t* depth_mid;
-	uint8_t* depth_front;
-	uint8_t* rgb_back;
-	uint8_t* rgb_mid;
-	uint8_t* rgb_front;
-
-	freenect_context* context;
-	freenect_usb_context* usbContext;
-	freenect_device* device;
-	int angle;
-	int led;
-	
-	static v8_Freenect* getThis(const v8::Arguments& args) 
+	/**
+	 * Get RBG image of kinect.
+	 *
+	 * @param args Arguments list.
+	 * @return {Array.<uint32>} RGB pixel data
+	 */
+	static v8::Handle<v8::Value> GetVideo(const v8::Arguments& args)
 	{
-		v8_Freenect* freenect = static_cast<v8_Freenect*>(args.This()->GetPointerFromInternalField(0));
+		Freenect* freenect = getThis(args);
+		char* buf = static_cast<char*>(freenect->GetVideo());
+		int length = FREENECT_VIDEO_RGB_SIZE;
+		v8::Local<v8::Array> array = v8::Array::New(length);
+		for (int i = 0; i < length; ++i) {
+			array->Set(v8::Integer::New(i), v8::Uint32::New(buf[i])); 
+		}
+		return array;
+	}
+	
+	/**
+	 * Get depth buffer of kinect.
+	 *
+	 * @param args Arguments list.
+	 * @return {Array.<uint32>} Depth buffer data
+	 */
+	static v8::Handle<v8::Value> GetDepth(const v8::Arguments& args)
+	{
+		Freenect* freenect = getThis(args);
+		char* buf = static_cast<char*>(freenect->GetDepth());
+		int length = FREENECT_DEPTH_11BIT_SIZE;
+		v8::Local<v8::Array> array = v8::Array::New(length);
+		for (int i = 0; i < length; ++i) {
+			array->Set(v8::Integer::New(i), v8::Uint32::New(buf[i])); 
+		}
+		return array;
+	}
+
+	/**
+	 * Get tilt angle of kinect.
+	 *
+	 * @param args Arguments list.
+	 * @return {Number} Depth buffer data
+	 */
+	static v8::Handle<v8::Value> GetTiltAngle(const v8::Arguments& args)
+	{
+		Freenect* freenect = getThis(args);
+		double angle = freenect->GetTiltAngle();
+		return v8::Number::New(angle);
+	}
+
+private:
+	int deviceIndex;
+	double tiltAngle;
+
+	freenect_led_options ledOption;
+	freenect_raw_tilt_state* tiltState;
+	freenect_video_format videoFormat;
+	freenect_depth_format depthFormat;
+
+	void* videoBuffer;
+	void* depthBuffer;
+
+	/**
+	 * Get this pointer from v8::Arguments.
+	 */
+	static Freenect* getThis(const v8::Arguments& args)
+	{
+		Freenect* freenect = static_cast<Freenect*>(args.This()->GetPointerFromInternalField(0));
 		return freenect;
 	}
 
@@ -214,15 +300,16 @@ private:
 
 extern "C" void init(v8::Handle<v8::Object> target)
 {
-  v8::Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(v8_Freenect::New);
+	v8::HandleScope scope;
+  v8::Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(Freenect::New);
 	t->InstanceTemplate()->SetInternalFieldCount(1);
-	NODE_SET_PROTOTYPE_METHOD(t, "init", v8_Freenect::Init);
-	NODE_SET_PROTOTYPE_METHOD(t, "start", v8_Freenect::Start);
-	NODE_SET_PROTOTYPE_METHOD(t, "stop", v8_Freenect::Stop);
-	NODE_SET_PROTOTYPE_METHOD(t, "setLed", v8_Freenect::SetLed);
-	NODE_SET_PROTOTYPE_METHOD(t, "setTiltDegs", v8_Freenect::SetTiltDegs);
-	NODE_SET_PROTOTYPE_METHOD(t, "isConnected", v8_Freenect::IsConnected);
-
-  target->Set(v8::String::New("Freenect"), t->GetFunction());
+	NODE_SET_PROTOTYPE_METHOD(t, "setLed", Freenect::SetLed);
+	NODE_SET_PROTOTYPE_METHOD(t, "setTiltAngle", Freenect::SetTiltAngle);
+	NODE_SET_PROTOTYPE_METHOD(t, "getTiltAngle", Freenect::GetTiltAngle);
+	NODE_SET_PROTOTYPE_METHOD(t, "getVideo", Freenect::GetVideo);
+	NODE_SET_PROTOTYPE_METHOD(t, "getDepth", Freenect::GetDepth);
+  target->Set(v8::String::New("Kinect"), t->GetFunction());
 }
+
+
 

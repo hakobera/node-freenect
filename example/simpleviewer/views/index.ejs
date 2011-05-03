@@ -1,22 +1,15 @@
 <form id="control">
 	<fieldset>
-		<legend>Status</legend>
-		<div>
-			<button id="startButton">Start</button>
-			<button id="stopButton">Stop</button>
-			Status: <span id="statusLabel"></span>
-		</div>
-	</fieldset>
-	<fieldset>
 		<legend>LED Control</legend>
 		<div>
-			<input type="radio" name="led" value="0"/> OFF
-			<input type="radio" name="led" value="1"/> GREEN
-			<input type="radio" name="led" value="2"/> RED
-			<input type="radio" name="led" value="3"/> YELLOW
-			<input type="radio" name="led" value="4"/> BLINK YELLOW
-			<input type="radio" name="led" value="5" checked="checked"/> BLINK GREEN
-			<input type="radio" name="led" value="6"/> BLINK RED YELLOW
+			<ul class="horizontal">
+				<li><input id="led0" type="radio" name="led" value="0"/> <label for="led0">OFF</label></li>
+				<li><input id="led1" type="radio" name="led" value="1"/> <label for="led1">GREEN</label></li>
+				<li><input id="led2" type="radio" name="led" value="2"/> <label for="led2">RED</label></li>
+				<li><input id="led3" type="radio" name="led" value="3"/> <label for="led3">YELLOW</label></li>
+				<li><input id="led5" type="radio" name="led" value="5"/> <label for="led5">BLINK GREEN</label></li>
+				<li><input id="led6" type="radio" name="led" value="6"/> <label for="led6">BLINK RED YELLOW</label></li>
+			</ul>
 		</div>
 	</fieldset>
 	<fieldset>
