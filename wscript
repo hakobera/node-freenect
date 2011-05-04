@@ -17,9 +17,9 @@ def configure(conf):
 
 def build(bld):
   obj = bld.new_task_gen('cxx', 'shlib', 'node_addon')
-  obj.target = 'freenect_bindings'
+  obj.target = 'freenect_binding'
   obj.source = './src/node_freenect.cc'
-  obj.includes = [ './src', './lib/include' ]
+  obj.includes = [ '/usr/local/include', '/usr/local/include/libfreenect' ]
   obj.lib = [ 'usb-1.0', 'freenect', 'freenect_sync' ]
   obj.name = 'node-freenect'
 

@@ -83,12 +83,16 @@
 	  },
 
 	  setLed: function(ledOption) {
-		  this.sendCommand('setLed', { color: ledOption });
+		  this.sendCommand('setLed', { option: ledOption });
 	  },
 
 	  setTiltAngle: function(angle) {
-			this.sendCommand('setTiltAngle', { degree: angle });
-		}
+			this.sendCommand('setTiltAngle', { angle: angle });
+		},
+
+	  stop: function() {
+		  this.sendCommand('stop');
+	  }
 
   };
 

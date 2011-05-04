@@ -1,10 +1,16 @@
 {
-	"name" : "freenect_bindings",
+	"name" : "freenect",
 	"version" : "0.0.1",
-	"description" : "Experimental libfreenect bindings",
-	"author" : "Kazuyuki Honda",
-	"main" : "./freenect_bindings",
-	"scripts" : { "install" : "node-waf configure build" },
+	"description" : "libfreenect bindings for Node.js",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/hakobera/node-freenect"
+	},
+	"author" : "Kazuyuki Honda <hakobera@gmail.com>",
+	"main" : "./freenect",
+	"scripts" : {
+		"install" : "node-waf configure build"
+	},
   "engine": {
     "node": ">=-0.4.0"
   }

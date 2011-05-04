@@ -4,7 +4,7 @@ var express = require('express'),
     sys = require('sys'),
     path = require('path'),
     io = require('socket.io'),
-    kinect = new (require('../../build/default/freenect_bindings').Kinect)(),
+    kinect = new (require('../../freenect').Kinect)(),
     port = 3000,
     app,
     socket;
@@ -74,19 +74,24 @@ app.get('/', function(req, res) {
 
 var commands = {
   setLed: function(cmd) {
-    var color = parseInt(cmd.color, 10);
-    if (isNaN(color)) {
+    var option = parseInt(cmd.option, 10);
+    if (isNaN(option)) {
       color = 5; // BLINK GREEN
     }
-    return kinect.setLed(color);
+    return kinect.setLed(option);
   },
 
 	setTiltAngle: function(cmd) {
-		var deg = parseFloat(cmd.degree);
-		if (isNaN(deg)) {
+		var angle = parseFloat(cmd.angle);
+		if (isNaN(angle)) {
 			return false;
 		}
-		return kinect.setTiltAngle(deg);
+		return kinect.setTiltAngle(angle);
+	},
+
+	stop: function(cmd) {
+		kinect.stop();
+		return true;
 	}
 };
 

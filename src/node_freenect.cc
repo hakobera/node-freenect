@@ -148,6 +148,14 @@ public:
 		return angle;
 	}
 
+	/**
+	 * Stop conecting to kinect device.
+	 */
+	 void Stop()
+	 {
+	 	freenect_sync_stop();
+	 }
+
 	//------------------------------------------------------------------------
 
 	//------------------------------------------------------------------------
@@ -271,6 +279,19 @@ public:
 		return v8::Number::New(angle);
 	}
 
+	/**
+	 * Stop connecting to kinect.
+	 *
+	 * @param args Arguments list.
+	 * @return {undefined}
+	 */
+	static v8::Handle<v8::Value> Stop(const v8::Arguments& args)
+	{
+		Freenect* freenect = getThis(args);
+		freenect->Stop();
+		return v8::Undefined();
+	}
+
 private:
 	int deviceIndex;
 	double tiltAngle;
@@ -308,6 +329,7 @@ extern "C" void init(v8::Handle<v8::Object> target)
 	NODE_SET_PROTOTYPE_METHOD(t, "getTiltAngle", Freenect::GetTiltAngle);
 	NODE_SET_PROTOTYPE_METHOD(t, "getVideo", Freenect::GetVideo);
 	NODE_SET_PROTOTYPE_METHOD(t, "getDepth", Freenect::GetDepth);
+	NODE_SET_PROTOTYPE_METHOD(t, "stop", Freenect::Stop);
   target->Set(v8::String::New("Kinect"), t->GetFunction());
 }
 

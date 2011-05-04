@@ -1,4 +1,4 @@
-var Freenect = require('../../build/default/freenect_bindings');
+var Freenect = require('../../freenect');
 
 var kinect = new Freenect.Kinect(),
 		ledOption = 0,

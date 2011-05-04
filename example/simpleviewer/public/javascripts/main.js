@@ -2,10 +2,9 @@ $(function() {
 	var startButton = $('#startButton'),
 			stopButton = $('#stopButton'),
 			ledSwitch = $('input[name=led]'),
-			tiltDegInput = $('#tiltDegInput'),
-			tiltDegButton = $('#tiltDegButton'),
-			statusLabel = $('#statusLabel'),
-			connected = false,
+			tiltAngleInput = $('#tiltAngleInput'),
+			tiltAngleButton = $('#tiltAngleButton'),
+			stopButton = $('#stopButton'),
 			eventTimer;
 
 	Kinect.connect();
@@ -14,11 +13,17 @@ $(function() {
 		Kinect.setLed($(this).val());
 	});
 
-	tiltDegButton.click(function(e) {
+	tiltAngleButton.click(function(e) {
 		e.preventDefault();
-		var angle = parseFloat(tiltDegInput.val());
+		var v = tiltAngleInput.val(),
+				angle = parseFloat(v);
 		if (!isNaN(angle)) {
 			Kinect.setTiltAngle(angle);
 		}
+	});
+
+	stopButton.click(function(e) {
+		e.preventDefault();
+			Kinect.stop();
 	});
 });

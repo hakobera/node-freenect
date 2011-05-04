@@ -1,8 +1,7 @@
-// enum taken from libfreenect.h
+// require the c++ bindings & export to javascript
+var binding = require(__dirname + '/build/default/freenect_binding');
 
-var Freenect = require('freenect_bindings');
-
-var LED_OPTIONS = {
+var LedOptions = {
 	OFF: 0,
 	GREEN: 1,
 	RED: 2,
@@ -11,5 +10,7 @@ var LED_OPTIONS = {
 	BLINK_RED_YELLOW: 6
 };
 
-exports.Kinect = Freenect.Kinect;
-exports.LED_OPTIONS = LED_OPTIONS;
+module.exports = {
+	Kinect: binding.Kinect,
+	LedOptions: LedOptions
+};
