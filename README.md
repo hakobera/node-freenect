@@ -31,7 +31,7 @@ Just clone this repository, and using npm.
 Licence
 -------
 
-Copyright 2011 Kazuyuki Honda
+Copyright 2011 Kazuyuki Honda <hakobera@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
