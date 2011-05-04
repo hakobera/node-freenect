@@ -93,7 +93,22 @@ var commands = {
 	stop: function(cmd) {
 		kinect.stop();
 		return true;
+	},
+
+	getDepth: function(cmd) {
+		var buffer = kinect.getDepth();
+		return {
+			data: buffer
+		};
+	},
+
+	getVideo: function(cmd) {
+		var buffer = kinect.getVideo();
+		return {
+			data: buffer
+		};
 	}
+
 };
 
 app.listen(port);

@@ -239,11 +239,26 @@ public:
 	static v8::Handle<v8::Value> GetVideo(const v8::Arguments& args)
 	{
 		Freenect* freenect = getThis(args);
-		char* buf = static_cast<char*>(freenect->GetVideo());
+		unsigned char* buf = static_cast<unsigned char*>(freenect->GetVideo());
 		int length = FREENECT_VIDEO_RGB_SIZE;
 		v8::Local<v8::Array> array = v8::Array::New(length);
-		for (int i = 0; i < length; ++i) {
-			array->Set(v8::Integer::New(i), v8::Uint32::New(buf[i])); 
+		for (int i = 0; i < length; i+=16) {
+			array->Set(i   , v8::Uint32::New(buf[i   ]));
+			array->Set(i+1 , v8::Uint32::New(buf[i+ 1]));
+			array->Set(i+2 , v8::Uint32::New(buf[i+ 2]));
+			array->Set(i+3 , v8::Uint32::New(buf[i+ 3]));
+			array->Set(i+4 , v8::Uint32::New(buf[i+ 4]));
+			array->Set(i+5 , v8::Uint32::New(buf[i+ 5]));
+			array->Set(i+6 , v8::Uint32::New(buf[i+ 6]));
+			array->Set(i+7 , v8::Uint32::New(buf[i+ 7]));
+			array->Set(i+8 , v8::Uint32::New(buf[i+ 8]));
+			array->Set(i+9 , v8::Uint32::New(buf[i+ 9]));
+			array->Set(i+10, v8::Uint32::New(buf[i+10]));
+			array->Set(i+11, v8::Uint32::New(buf[i+11]));
+			array->Set(i+12, v8::Uint32::New(buf[i+12]));
+			array->Set(i+13, v8::Uint32::New(buf[i+13]));
+			array->Set(i+14, v8::Uint32::New(buf[i+14]));
+			array->Set(i+15, v8::Uint32::New(buf[i+15]));
 		}
 		return array;
 	}
@@ -257,11 +272,26 @@ public:
 	static v8::Handle<v8::Value> GetDepth(const v8::Arguments& args)
 	{
 		Freenect* freenect = getThis(args);
-		char* buf = static_cast<char*>(freenect->GetDepth());
-		int length = FREENECT_DEPTH_11BIT_SIZE;
+		uint16_t* buf = static_cast<uint16_t*>(freenect->GetDepth());
+		int length = FREENECT_FRAME_PIX;
 		v8::Local<v8::Array> array = v8::Array::New(length);
-		for (int i = 0; i < length; ++i) {
-			array->Set(v8::Integer::New(i), v8::Uint32::New(buf[i])); 
+		for (int i = 0; i < length; i+=16) {
+			array->Set(i   , v8::Uint32::New(buf[i   ]));
+			array->Set(i+1 , v8::Uint32::New(buf[i+ 1]));
+			array->Set(i+2 , v8::Uint32::New(buf[i+ 2]));
+			array->Set(i+3 , v8::Uint32::New(buf[i+ 3]));
+			array->Set(i+4 , v8::Uint32::New(buf[i+ 4]));
+			array->Set(i+5 , v8::Uint32::New(buf[i+ 5]));
+			array->Set(i+6 , v8::Uint32::New(buf[i+ 6]));
+			array->Set(i+7 , v8::Uint32::New(buf[i+ 7]));
+			array->Set(i+8 , v8::Uint32::New(buf[i+ 8]));
+			array->Set(i+9 , v8::Uint32::New(buf[i+ 9]));
+			array->Set(i+10, v8::Uint32::New(buf[i+10]));
+			array->Set(i+11, v8::Uint32::New(buf[i+11]));
+			array->Set(i+12, v8::Uint32::New(buf[i+12]));
+			array->Set(i+13, v8::Uint32::New(buf[i+13]));
+			array->Set(i+14, v8::Uint32::New(buf[i+14]));
+			array->Set(i+15, v8::Uint32::New(buf[i+15]));
 		}
 		return array;
 	}

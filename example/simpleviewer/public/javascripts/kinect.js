@@ -53,9 +53,9 @@
 
   socket.on('message', function(command) {
 	  var cmd = JSON.parse(command);
-    console.log(cmd);
+    console.log('[callback][%s]', cmd.type);
 	  if (commandCallbacks.hasOwnProperty(cmd.type)) {
-		  commandCallbacks[cmd.type](cmd);
+		  commandCallbacks[cmd.type].call(Kinect, cmd.result);
 	  };
   });
 
@@ -72,6 +72,7 @@
       if (connected) {
         var cmd = options || {};
         cmd.type = commandType
+	      console.log('[send][%s]', cmd.type, cmd);
         socket.send(JSON.stringify(cmd));
       }
     },
@@ -89,6 +90,24 @@
 	  setTiltAngle: function(angle) {
 			this.sendCommand('setTiltAngle', { angle: angle });
 		},
+
+	  getDepth: function(callback) {
+		  this.sendCommand('getDepth');
+		  this.on('getDepth', function(ret) {
+				if (callback) {
+					callback.call(Kinect, ret.data);
+				}
+			});
+	  },
+
+	  getVideo: function(callback) {
+		  this.sendCommand('getVideo');
+		  this.on('getVideo', function(ret) {
+				if (callback) {
+					callback.call(Kinect, ret.data);
+				}
+			});
+	  },
 
 	  stop: function() {
 		  this.sendCommand('stop');
