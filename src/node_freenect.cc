@@ -5,20 +5,14 @@
 //-------------------------------------------------------------------------
 // Includes
 //-------------------------------------------------------------------------
+#include <cstdio>
+#include <cstring>
+#include <cstdlib>
+
 #include <v8.h>
 #include <node.h>
 #include <node_buffer.h>
 #include <node_events.h>
-
-#include <string.h>
-#include <errno.h>
-#include <iostream>
-#include <stdio.h>
-#include <cstring>
-#include <string>
-#include <cstdlib>
-
-#include <pthread.h>
 
 #include <libfreenect_sync.h>
 
@@ -170,6 +164,8 @@ public:
 	 */
 	static v8::Handle<v8::Value> New(const v8::Arguments& args)
 	{
+		v8::HandleScope scope;
+
 		Freenect* freenect = new Freenect();
 		freenect->Wrap(args.This());
 		freenect->Ref();
@@ -184,6 +180,8 @@ public:
 	 */
 	static v8::Handle<v8::Value> SetLed(const v8::Arguments& args)
 	{
+	  v8::HandleScope scope;
+
 		if (args.Length() != 1) {
 			THROW_BAD_ARGS("SetLed must have 1 argument.")
 		}
@@ -214,6 +212,8 @@ public:
 	 */
 	static v8::Handle<v8::Value> SetTiltAngle(const v8::Arguments& args)
 	{
+		v8::HandleScope scope;
+
 		if (args.Length() != 1) {
 			THROW_BAD_ARGS("SetTiltAngle must have 1 argument.")
 		}
@@ -238,6 +238,8 @@ public:
 	 */
 	static v8::Handle<v8::Value> GetVideo(const v8::Arguments& args)
 	{
+	  v8::HandleScope scope;
+
 		Freenect* freenect = getThis(args);
 		unsigned char* buf = static_cast<unsigned char*>(freenect->GetVideo());
 		int length = FREENECT_VIDEO_RGB_SIZE;
@@ -262,6 +264,22 @@ public:
 		}
 		return array;
 	}
+
+	/**
+	 * Get video buffer of kinect.
+	 *
+	 * @param args Arguments list.
+	 * @return {Buffer} Video buffer data (RGB)
+	 */
+	static v8::Handle<v8::Value> GetVideoBuffer(const v8::Arguments& args)
+	{
+		v8::HandleScope scope;
+
+		Freenect* freenect = getThis(args);
+		char* buf = static_cast<char*>(freenect->GetVideo());
+		node::Buffer* retbuf = node::Buffer::New(buf, FREENECT_VIDEO_RGB_SIZE);
+		return retbuf->handle_;
+	}
 	
 	/**
 	 * Get depth buffer of kinect.
@@ -271,6 +289,8 @@ public:
 	 */
 	static v8::Handle<v8::Value> GetDepth(const v8::Arguments& args)
 	{
+		v8::HandleScope scope;
+
 		Freenect* freenect = getThis(args);
 		uint16_t* buf = static_cast<uint16_t*>(freenect->GetDepth());
 		int length = FREENECT_FRAME_PIX;
@@ -297,6 +317,22 @@ public:
 	}
 
 	/**
+	 * Get depth buffer of kinect.
+	 *
+	 * @param args Arguments list.
+	 * @return {Buffer} Depth buffer data
+	 */
+	static v8::Handle<v8::Value> GetDepthBuffer(const v8::Arguments& args)
+	{
+		v8::HandleScope scope;
+
+		Freenect* freenect = getThis(args);
+		char* buf = static_cast<char*>(freenect->GetDepth());
+		node::Buffer* retbuf = node::Buffer::New(buf, FREENECT_DEPTH_11BIT_SIZE);
+		return retbuf->handle_;
+	}
+
+	/**
 	 * Get tilt angle of kinect.
 	 *
 	 * @param args Arguments list.
@@ -304,6 +340,8 @@ public:
 	 */
 	static v8::Handle<v8::Value> GetTiltAngle(const v8::Arguments& args)
 	{
+	  v8::HandleScope scope;
+
 		Freenect* freenect = getThis(args);
 		double angle = freenect->GetTiltAngle();
 		return v8::Number::New(angle);
@@ -317,6 +355,8 @@ public:
 	 */
 	static v8::Handle<v8::Value> Stop(const v8::Arguments& args)
 	{
+		v8::HandleScope scope;
+
 		Freenect* freenect = getThis(args);
 		freenect->Stop();
 		return v8::Undefined();
@@ -339,7 +379,7 @@ private:
 	 */
 	static Freenect* getThis(const v8::Arguments& args)
 	{
-		Freenect* freenect = static_cast<Freenect*>(args.This()->GetPointerFromInternalField(0));
+		Freenect* freenect = ObjectWrap::Unwrap<Freenect>(args.This());
 		return freenect;
 	}
 
@@ -352,13 +392,16 @@ private:
 extern "C" void init(v8::Handle<v8::Object> target)
 {
 	v8::HandleScope scope;
+	
   v8::Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(Freenect::New);
 	t->InstanceTemplate()->SetInternalFieldCount(1);
 	NODE_SET_PROTOTYPE_METHOD(t, "setLed", Freenect::SetLed);
 	NODE_SET_PROTOTYPE_METHOD(t, "setTiltAngle", Freenect::SetTiltAngle);
 	NODE_SET_PROTOTYPE_METHOD(t, "getTiltAngle", Freenect::GetTiltAngle);
 	NODE_SET_PROTOTYPE_METHOD(t, "getVideo", Freenect::GetVideo);
+	NODE_SET_PROTOTYPE_METHOD(t, "getVideoBuffer", Freenect::GetVideoBuffer);
 	NODE_SET_PROTOTYPE_METHOD(t, "getDepth", Freenect::GetDepth);
+	NODE_SET_PROTOTYPE_METHOD(t, "getDepthBuffer", Freenect::GetDepthBuffer);
 	NODE_SET_PROTOTYPE_METHOD(t, "stop", Freenect::Stop);
   target->Set(v8::String::New("Kinect"), t->GetFunction());
 }

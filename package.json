@@ -1,17 +1,15 @@
 {
 	"name" : "freenect",
-	"version" : "0.0.1",
 	"description" : "libfreenect bindings for Node.js",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/hakobera/node-freenect"
-	},
+	"version" : "0.0.2",
 	"author" : "Kazuyuki Honda <hakobera@gmail.com>",
-	"main" : "./freenect",
+	"keywords": ["kinect", "libfreenect"],
+	"repository": "git://github.com/hakobera/node-freenect",
+	"main" : "freenect",
 	"scripts" : {
 		"install" : "node-waf configure build"
 	},
-  "engine": {
-    "node": ">=-0.4.0"
+  "engines": {
+    "node": ">=-0.4.0 < 0.5.0"
   }
 }
