@@ -39,8 +39,8 @@ public:
 	Freenect()
 	: deviceIndex(0), videoFormat(FREENECT_VIDEO_RGB), depthFormat(FREENECT_DEPTH_11BIT)
 	{
-		videoBuffer = malloc(FREENECT_VIDEO_RGB_SIZE);
-		depthBuffer = malloc(FREENECT_DEPTH_11BIT_SIZE);
+		videoBuffer = malloc(freenect_find_video_mode(FREENECT_RESOLUTION_MEDIUM, FREENECT_VIDEO_RGB).bytes);
+		depthBuffer = malloc(freenect_find_depth_mode(FREENECT_RESOLUTION_MEDIUM, FREENECT_DEPTH_11BIT).bytes);
 		tiltState = new freenect_raw_tilt_state();
 		tiltAngle = GetTiltAngle();
 	}
@@ -242,7 +242,7 @@ public:
 
 		Freenect* freenect = getThis(args);
 		unsigned char* buf = static_cast<unsigned char*>(freenect->GetVideo());
-		int length = FREENECT_VIDEO_RGB_SIZE;
+		int length = freenect_find_video_mode(FREENECT_RESOLUTION_MEDIUM, FREENECT_VIDEO_RGB).bytes;
 		v8::Local<v8::Array> array = v8::Array::New(length);
 		for (int i = 0; i < length; i+=16) {
 			array->Set(i   , v8::Uint32::New(buf[i   ]));
@@ -277,7 +277,7 @@ public:
 
 		Freenect* freenect = getThis(args);
 		char* buf = static_cast<char*>(freenect->GetVideo());
-		node::Buffer* retbuf = node::Buffer::New(buf, FREENECT_VIDEO_RGB_SIZE);
+		node::Buffer* retbuf = node::Buffer::New(buf, freenect_find_video_mode(FREENECT_RESOLUTION_MEDIUM, FREENECT_VIDEO_RGB).bytes);
 		return retbuf->handle_;
 	}
 	
@@ -293,7 +293,7 @@ public:
 
 		Freenect* freenect = getThis(args);
 		uint16_t* buf = static_cast<uint16_t*>(freenect->GetDepth());
-		int length = FREENECT_FRAME_PIX;
+		int length = 640*480;
 		v8::Local<v8::Array> array = v8::Array::New(length);
 		for (int i = 0; i < length; i+=16) {
 			array->Set(i   , v8::Uint32::New(buf[i   ]));
@@ -328,7 +328,7 @@ public:
 
 		Freenect* freenect = getThis(args);
 		char* buf = static_cast<char*>(freenect->GetDepth());
-		node::Buffer* retbuf = node::Buffer::New(buf, FREENECT_DEPTH_11BIT_SIZE);
+		node::Buffer* retbuf = node::Buffer::New(buf, freenect_find_depth_mode(FREENECT_RESOLUTION_MEDIUM, FREENECT_DEPTH_11BIT).bytes);
 		return retbuf->handle_;
 	}
 
