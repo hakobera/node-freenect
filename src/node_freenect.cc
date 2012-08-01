@@ -12,7 +12,7 @@
 #include <v8.h>
 #include <node.h>
 #include <node_buffer.h>
-#include <node_events.h>
+#include <node_object_wrap.h>
 
 #include <libfreenect_sync.h>
 
@@ -32,7 +32,7 @@
 //-------------------------------------------------------------------------
 // libfreenect wrapper for Node.js
 //-------------------------------------------------------------------------
-class Freenect : node::EventEmitter
+class Freenect : node::ObjectWrap
 {
 public:
 
