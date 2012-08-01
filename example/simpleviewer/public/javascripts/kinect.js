@@ -53,7 +53,7 @@
 
   socket.on('message', function(command) {
 	  var cmd = JSON.parse(command);
-    console.log('[callback][%s]', cmd.type);
+    // console.log('[callback][%s]', cmd.type);
 	  if (commandCallbacks.hasOwnProperty(cmd.type)) {
 		  commandCallbacks[cmd.type].call(Kinect, cmd.result);
 	  };
@@ -72,7 +72,7 @@
       if (connected) {
         var cmd = options || {};
         cmd.type = commandType
-	      console.log('[send][%s]', cmd.type, cmd);
+	      // console.log('[send][%s]', cmd.type, cmd);
         socket.send(JSON.stringify(cmd));
       }
     },

@@ -12,7 +12,7 @@
 #include <v8.h>
 #include <node.h>
 #include <node_buffer.h>
-#include <node_events.h>
+#include <node_object_wrap.h>
 
 #include <libfreenect_sync.h>
 
@@ -32,15 +32,15 @@
 //-------------------------------------------------------------------------
 // libfreenect wrapper for Node.js
 //-------------------------------------------------------------------------
-class Freenect : node::EventEmitter
+class Freenect : node::ObjectWrap
 {
 public:
 
 	Freenect()
 	: deviceIndex(0), videoFormat(FREENECT_VIDEO_RGB), depthFormat(FREENECT_DEPTH_11BIT)
 	{
-		videoBuffer = malloc(freenect_find_video_mode(FREENECT_RESOLUTION_MEDIUM, FREENECT_VIDEO_RGB).bytes);
-		depthBuffer = malloc(freenect_find_depth_mode(FREENECT_RESOLUTION_MEDIUM, FREENECT_DEPTH_11BIT).bytes);
+		videoBuffer = malloc(freenect_find_video_mode(FREENECT_RESOLUTION_LOW, FREENECT_VIDEO_RGB).bytes);
+		depthBuffer = malloc(freenect_find_depth_mode(FREENECT_RESOLUTION_LOW, FREENECT_DEPTH_11BIT).bytes);
 		tiltState = new freenect_raw_tilt_state();
 		tiltAngle = GetTiltAngle();
 	}
@@ -242,8 +242,9 @@ public:
 
 		Freenect* freenect = getThis(args);
 		unsigned char* buf = static_cast<unsigned char*>(freenect->GetVideo());
-		int length = freenect_find_video_mode(FREENECT_RESOLUTION_MEDIUM, FREENECT_VIDEO_RGB).bytes;
+		int length = freenect_find_video_mode(FREENECT_RESOLUTION_LOW, FREENECT_VIDEO_RGB).bytes;
 		v8::Local<v8::Array> array = v8::Array::New(length);
+		/*
 		for (int i = 0; i < length; i+=16) {
 			array->Set(i   , v8::Uint32::New(buf[i   ]));
 			array->Set(i+1 , v8::Uint32::New(buf[i+ 1]));
@@ -262,6 +263,7 @@ public:
 			array->Set(i+14, v8::Uint32::New(buf[i+14]));
 			array->Set(i+15, v8::Uint32::New(buf[i+15]));
 		}
+		*/
 		return array;
 	}
 
@@ -277,7 +279,7 @@ public:
 
 		Freenect* freenect = getThis(args);
 		char* buf = static_cast<char*>(freenect->GetVideo());
-		node::Buffer* retbuf = node::Buffer::New(buf, freenect_find_video_mode(FREENECT_RESOLUTION_MEDIUM, FREENECT_VIDEO_RGB).bytes);
+		node::Buffer* retbuf = node::Buffer::New(buf, freenect_find_video_mode(FREENECT_RESOLUTION_LOW, FREENECT_VIDEO_RGB).bytes);
 		return retbuf->handle_;
 	}
 	
@@ -324,11 +326,81 @@ public:
 	 */
 	static v8::Handle<v8::Value> GetDepthBuffer(const v8::Arguments& args)
 	{
+		printf("entering getdepth\n");
 		v8::HandleScope scope;
-
 		Freenect* freenect = getThis(args);
-		char* buf = static_cast<char*>(freenect->GetDepth());
-		node::Buffer* retbuf = node::Buffer::New(buf, freenect_find_depth_mode(FREENECT_RESOLUTION_MEDIUM, FREENECT_DEPTH_11BIT).bytes);
+		uint16_t* buf = static_cast<uint16_t*>(freenect->GetDepth());
+		freenect_frame_mode mode = freenect_find_depth_mode(FREENECT_RESOLUTION_MEDIUM, FREENECT_DEPTH_11BIT);
+		int length = mode.width * mode.height;
+		printf("valid:%d, width:%d, height:%d, length:%d\n", mode.is_valid, mode.width, mode.height, length);
+		if(!mode.is_valid)
+			return v8::Boolean::New(false);
+		char *buf2 = (char *)malloc(length);//[640*480] = { 0,1,2,3,4,5 };
+		printf("ptr buf=0x%08X, buf2=0x%08X\n", (unsigned long)buf, (unsigned long)buf2);
+		for (int i = 0; i < length; i++) {
+			buf2[i] = rand()&255;//buf[i] >> 2;
+		}
+		node::Buffer* retbuf = node::Buffer::New(buf2, length);
+		free(buf2);
+		printf("leaving getdepth\n");
+		return retbuf->handle_;
+	}
+
+	/**
+	 * Get scaled depth buffer of kinect.
+	 *
+	 * @param args Arguments list.
+	 * @return {Buffer} Depth buffer data
+	 */
+	static v8::Handle<v8::Value> GetScaledDepthBuffer(const v8::Arguments& args)
+	{
+
+		if (args.Length() != 2) {
+			THROW_BAD_ARGS("GetScaledDepthBuffer must have 2 arguments.")
+		}
+		
+		v8::Local<v8::Value> w_param = args[0];
+		v8::Local<v8::Value> h_param = args[1];
+		if (!w_param->IsNumber() && !h_param->IsNumber()) {
+			THROW_BAD_ARGS("SetTiltAngle must have 2 number argument.")
+		}
+		
+		int outputwidth = (int)w_param->NumberValue();
+		int outputheight = (int)h_param->NumberValue();
+
+		v8::HandleScope scope;
+		Freenect* freenect = getThis(args);
+		uint16_t* buf = static_cast<uint16_t*>(freenect->GetDepth());
+		freenect_frame_mode mode = freenect_find_depth_mode(FREENECT_RESOLUTION_MEDIUM, FREENECT_DEPTH_11BIT);
+		int length = mode.width * mode.height;
+		int outputlength = outputwidth * outputheight;
+		printf("valid:%d, width:%d (%d), height:%d (%d), length:%d\n", mode.is_valid, mode.width, outputwidth, mode.height, outputheight, length);
+		char *buf2 = (char *)malloc(length);//[640*480] = { 0,1,2,3,4,5 };
+		char *buf3 = (char *)malloc(outputlength);//[640*480] = { 0,1,2,3,4,5 };
+		printf("ptr buf=0x%08X, buf2=0x%08X\n", (unsigned long)buf, (unsigned long)buf2);
+
+		// scale to bytes
+		for (int i = 0; i < length; i++) {
+			buf2[i] = buf[i] >> 2;
+		}
+
+		// ugly downscaler
+
+		int oo = 0;
+		int istride = mode.width;
+		for(int j=0; j<outputheight; j++) {
+			int iy = (j * mode.height) / outputheight;
+			for(int i=0; i<outputwidth; i++) {
+				int ix = (i * mode.width) / outputwidth;
+				int s = buf2[iy * istride + ix];
+				buf3[oo++] = s;
+			}
+		}
+
+		node::Buffer* retbuf = node::Buffer::New(buf3, outputlength);
+		free(buf2);
+		free(buf3);
+		printf("leaving getdepth\n");
 		return retbuf->handle_;
 	}
 
@@ -392,7 +464,7 @@ private:
 extern "C" void init(v8::Handle<v8::Object> target)
 {
 	v8::HandleScope scope;
-	
+
   v8::Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(Freenect::New);
 	t->InstanceTemplate()->SetInternalFieldCount(1);
 	NODE_SET_PROTOTYPE_METHOD(t, "setLed", Freenect::SetLed);
@@ -402,6 +474,7 @@ extern "C" void init(v8::Handle<v8::Object> target)
 	NODE_SET_PROTOTYPE_METHOD(t, "getVideoBuffer", Freenect::GetVideoBuffer);
 	NODE_SET_PROTOTYPE_METHOD(t, "getDepth", Freenect::GetDepth);
 	NODE_SET_PROTOTYPE_METHOD(t, "getDepthBuffer", Freenect::GetDepthBuffer);
+	NODE_SET_PROTOTYPE_METHOD(t, "getScaledDepthBuffer", Freenect::GetScaledDepthBuffer);
 	NODE_SET_PROTOTYPE_METHOD(t, "stop", Freenect::Stop);
   target->Set(v8::String::New("Kinect"), t->GetFunction());
 }
