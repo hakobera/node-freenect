@@ -4,7 +4,7 @@ var express = require('express'),
     sys = require('sys'),
     path = require('path'),
     io = require('socket.io'),
-		freenect = require('freenect'),
+		freenect = require('../../freenect'),
     kinect = new freenect.Kinect(),
     port = 3000,
     app,
@@ -73,6 +73,10 @@ app.get('/', function(req, res) {
   res.render('index.ejs');
 });
 
+app.get('/webgl', function(req, res) {
+  res.render('webgl.ejs');
+});
+
 var commands = {
   setLed: function(cmd) {
     var option = parseInt(cmd.option, 10);
@@ -96,9 +100,11 @@ var commands = {
 	},
 
 	getDepth: function(cmd) {
-		var buffer = kinect.getDepth();
+		var buffer = kinect.getScaledDepthBuffer(80,60);
+    d = Array.prototype.slice.call(buffer,0);
+  //  console.log('Buffer:', d);
 		return {
-			data: buffer
+			data: d
 		};
 	},
 
@@ -116,6 +122,19 @@ console.log('Express server listening on port %d, environment: %s', port, app.se
 console.log('Using connect %s, Express %s, EJS %s', connect.version, express.version, ejs.version);
 
 socket = io.listen(app);
+
+/*
+app.configure('production',function(){
+  socket.set('transports', [
+    'websocket'
+    //,flashsocket'
+    //,'htmlfile'
+    //,'xhr-polling'
+    //,'jsonp-polling'
+  ]);
+});
+*/
+
 socket.on('connection', function(client) {
   console.log('Connected from');
   console.log(client);
@@ -124,7 +143,7 @@ socket.on('connection', function(client) {
     var command = JSON.parse(message),
         ret = {};
 
-    console.log(command);
+    // console.log(command);
     if (commands.hasOwnProperty(command.type)) {
       ret.type = command.type;
 	    ret.result = commands[command.type](command);

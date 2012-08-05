@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <title>Simple Viewer - node-freenect</title>
+    <link rel="stylesheet" href="/stylesheets/style.css"/>
+  </head>
+  <body style="overflow:hidden;">
+
+
+<script src="http://code.jquery.com/jquery-1.5.2.min.js"></script>
+<script src="/javascripts/socket.io.js"></script>
+<script src="/javascripts/kinect.js"></script>
+
+<div id="webgl"></div>
+
+<canvas id="screen" width="400" height="300" style="display:none;"></canvas>
+<canvas id="depthbuffer" width="80" height="60" style="display:none;"></canvas>
+
+<script src="/javascripts/Three.js"></script>
+<script src="/javascripts/ShaderExtras.js"></script>
+<script src="/javascripts/postprocessing/EffectComposer.js"></script>
+<script src="/javascripts/postprocessing/RenderPass.js"></script>
+<script src="/javascripts/postprocessing/BloomPass.js"></script>
+<script src="/javascripts/postprocessing/FilmPass.js"></script>
+<script src="/javascripts/postprocessing/DotScreenPass.js"></script>
+<script src="/javascripts/postprocessing/TexturePass.js"></script>
+<script src="/javascripts/postprocessing/ShaderPass.js"></script>
+<script src="/javascripts/postprocessing/MaskPass.js"></script>
+
+<script src="/javascripts/Detector.js"></script>
+<script src="/javascripts/Stats.js"></script>
+
+<script src="/javascripts/webgl.js"></script>
+
+
+  </body>
+</html>
+
+
